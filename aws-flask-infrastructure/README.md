@@ -1,207 +1,48 @@
-# Production-Ready Flask Application on AWS
+# AWS Flask Infrastructure
 
-**Built by:** Michael 
-**AWS Certification:** Solutions Architect Associate  
+Multi-tier AWS infrastructure for a Flask app, managed with Terraform.
+Built as a learning project while studying for the AWS Solutions Architect exam.
 
-## 🏗️ Architecture Overview
+## Architecture
 
-This project implements a highly available, scalable web application infrastructure on AWS with the following components:
-- **VPC Architecture:** Multi-tier network with public/private subnets across 2 availability zones
-- **Compute:** EC2 instance running Flask application with systemd service management
-- **Database:** RDS PostgreSQL in private subnets for secure data persistence
-- **Load Balancing:** Application Load Balancer with health checks for high availability
-- **Storage:** S3 bucket with encryption and public access controls
-- **Security:** Network segmentation via security groups following least privilege principle
+VPC with public/private subnets across 2 availability zones. The load 
+balancer and EC2 instance sit in public subnets, RDS lives in private 
+subnets with no internet route.
 ```
-                    Internet
-                       │
-                       ▼
-              ┌──────────────────┐
-              │  Load Balancer   │
-              │   (Port 80)      │
-              └────────┬─────────┘
-                       │
-           ┌───────────┴───────────┐
-           ▼                       ▼
-      ┌─────────┐             ┌─────────┐
-      │   EC2   │             │   EC2   │
-      │  Flask  │             │ (Future)│
-      └────┬────┘             └─────────┘
-           │
-           ▼
-    ┌──────────────┐
-    │     RDS      │
-    │  PostgreSQL  │
-    └──────────────┘
+Internet → ALB → EC2 (Flask) → RDS (PostgreSQL)
 ```
----
 
-## 🚀 Features
+## What's in here
 
-✅ **Infrastructure as Code:** 100% Terraform-managed, fully reproducible  
-✅ **High Availability:** Multi-AZ deployment with load balancing  
-✅ **Security First:** Private subnets, security groups, encrypted storage  
-✅ **Production Ready:** Health checks, auto-restart services, monitoring hooks  
-✅ **Automated Validation:** Python script to verify all components  
-✅ **Cost Optimized:** Uses free-tier eligible resources where possible
+- `terraform/main.tf` — VPC, subnets, security groups, IGW, route tables
+- `terraform/modules/vpc/` — pulled VPC config into a module so it's reusable
+- `scripts/validate_infrastructure.py` — Boto3 script that checks all 
+   components are running after deployment
 
----
-
-## 📁 Project Structure
-```
-aws-flask-infrastructure/
-├── terraform/
-│   ├── main.tf              # Main infrastructure configuration
-│   ├── modules/
-│   │   └── vpc/
-│   │       └── main.tf      # Reusable VPC module
-├── scripts/
-│   └── validate_infrastructure.py
-├── docs/
-│   └── ARCHITECTURE.md
-└── README.md
-```
----
-
-## 🛠️ Technologies Used
-- **Infrastructure as Code:** Terraform 1.0+
-- **Cloud Provider:** AWS (EC2, RDS, VPC, ALB, S3, IAM)
-- **Application:** Python 3.11, Flask
-- **Web Server:** Nginx (reverse proxy)
-- **Database:** PostgreSQL 15
-- **Scripting:** Python (Boto3 SDK)
-- **Version Control:** Git
-
----
-
-## 📋 Prerequisites
-
-- AWS Account with CLI configured
-- Terraform >= 1.0
-- Python 3.8+
-- SSH key pair in AWS
-
----
-
-## 🚀 Deployment Instructions
-
-### 1. Clone Repository
+## Deploy
 ```bash
-git clone 
-cd aws-flask-infrastructure/terraform
-```
-
-### 2. Configure Variables
-Update `main.tf` with your settings:
-- AWS region (default: us-east-1)
-- Database password (change from default!)
-- SSH key name
-
-### 3. Deploy Infrastructure
-```bash
+cd terraform
 terraform init
 terraform plan
 terraform apply
 ```
-Type `yes` when prompted. Deployment takes ~10-15 minutes.
 
-### 4. Get Application URL
+Takes about 10-15 minutes. Get the app URL with:
 ```bash
 terraform output load_balancer_url
 ```
-Visit the URL in your browser after 2-3 minutes.
 
-### 5. Validate Deployment
+## Tear down
 ```bash
-cd ../scripts
-python validate_infrastructure.py
-```
-
----
-## 💰 Cost Estimate
-
-**Monthly cost for 24/7 operation:**
-
-| Service | Instance Type | Monthly Cost |
-|---------|---------------|--------------|
-| EC2 | t2.micro | ~$8.50 |
-| RDS | db.t3.micro | ~$15 |
-| ALB | Application LB | ~$16 |
-| S3 | Standard storage | ~$1 |
-| **Total** | | **~$40-45/month** |
-
-**Cost Optimization Tips:**
-- Destroy when not in use: `terraform destroy`
-- Use t2.micro/t3.micro (free tier eligible)
-- Stop RDS instance when not needed
-- Enable S3 lifecycle policies
-
----
-
-## 🧹 Cleanup
-
-To avoid ongoing charges:
-```bash
-cd terraform
 terraform destroy
 ```
 
-Type `yes` to confirm. This removes ALL resources.
+Costs ~$40-45/month to run 24/7, so destroy when not in use. 
+RDS is the most expensive piece at ~$15/month.
 
----
+## Known issues / TODO
 
-## 🔐 Security Considerations
-
-- ✅ Database in private subnets (not internet-accessible)
-- ✅ Security groups restrict traffic to necessary ports
-- ✅ S3 bucket blocks public access
-- ✅ IAM roles follow least privilege
-- ⚠️ **Production recommendations:**
-  - Use AWS Secrets Manager for database passwords
-  - Enable CloudTrail for audit logging
-  - Implement VPC Flow Logs
-  - Add WAF for application protection
-  - Use HTTPS with ACM certificates
-
----
-
-## 📊 What I Learned
-
-- **Multi-tier VPC architecture** with public/private subnet patterns
-- **Infrastructure as Code best practices** using Terraform modules
-- **AWS service integration** (EC2, RDS, ALB, S3, IAM)
-- **Security group configuration** for network-level firewall rules
-- **Load balancer health checks** and target group management
-- **Python automation** with Boto3 for infrastructure validation
-- **Production deployment patterns** (systemd services, reverse proxy)
-
----
-
-## 🔮 Future Enhancements
-
-- [ ] Add Auto Scaling Group for horizontal scaling
-- [ ] Implement CloudWatch dashboards and alarms
-- [ ] Add HTTPS with ACM certificate
-- [ ] Implement CI/CD pipeline with GitHub Actions
-- [ ] Add CloudFront CDN for static assets
-- [ ] Implement backup automation for RDS
-- [ ] Add container orchestration (ECS/EKS)
-
----
-
-## 📝 License
-
-This project is for educational and portfolio purposes.
-
----
-## 🤝 Connect
-
-**Michael**   
-🎓 Computer Engineering @ University of Illinois Chicago  
-🏆 AWS Certified Solutions Architect Associate
-
-This project demonstrates enterprise cloud architecture patterns learned through:
-- AWS Solutions Architect certification preparation
-- Hands-on AWS experience
-- Infrastructure as Code best practices
-- Production deployment methodologies
+- SSH is open to 0.0.0.0/0 — fine for learning, would lock this down 
+  in production
+- No HTTPS yet — next step is adding ACM certificate
+- DB password is in the config — should move to Secrets Manager
