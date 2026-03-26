@@ -37,6 +37,16 @@ terraform output load_balancer_url
 terraform destroy
 ```
 
+**Monthly cost for 24/7 operation:**
+
+| Service | Instance Type | Monthly Cost |
+|---------|---------------|--------------|
+| EC2 | t2.micro | ~$8.50 |
+| RDS | db.t3.micro | ~$15 |
+| ALB | Application LB | ~$16 |
+| S3 | Standard storage | ~$1 |
+| **Total** | | **~$40-45/month** |
+
 Costs ~$40-45/month to run 24/7, so destroy when not in use. 
 RDS is the most expensive piece at ~$15/month.
 
