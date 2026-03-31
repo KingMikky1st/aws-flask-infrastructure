@@ -1,6 +1,3 @@
-# MAIN TERRAFORM CONFIGURATION
-# Tell Terraform what provider (AWS) and version to use
-
 terraform {
   required_version = ">= 1.0"
   
@@ -43,7 +40,7 @@ variable "db_password" {
   default     = "ChangeThisPassword123!"
 }
 
-# THE VPC MODULE - Create our network
+# VPC MODULE 
 module "vpc" {
   source = "./modules/vpc"
   
@@ -64,7 +61,6 @@ resource "random_id" "bucket_suffix" {
   byte_length = 4
 }
 
-# Block public access 
 resource "aws_s3_bucket_public_access_block" "app_bucket" {
   bucket = aws_s3_bucket.app_bucket.id
 
@@ -75,7 +71,6 @@ resource "aws_s3_bucket_public_access_block" "app_bucket" {
 }
 
 # RDS DATABASE - PostgreSQL database
-# Subnet group 
 resource "aws_db_subnet_group" "main" {
   name       = "${var.project_name}-db-subnet-group"
   subnet_ids = module.vpc.private_subnet_ids
@@ -85,7 +80,6 @@ resource "aws_db_subnet_group" "main" {
   }
 }
 
-# database
 resource "aws_db_instance" "main" {
   identifier           = "${var.project_name}-db"
   engine               = "postgres"
@@ -110,14 +104,11 @@ resource "aws_db_instance" "main" {
 }
 
 # a PostgreSQL database
-# - Version 15.4
-# - Smallest instance size t3.micro 
-# - 20GB storage
 # - in private subnets 
 
 
-# EC2 INSTANCE - The web server
-# Get Amazon Linux 2023 AMI
+# EC2 INSTANCE
+# Amazon Linux 2023 AMI
 data "aws_ami" "amazon_linux_2023" {
   most_recent = true
   owners      = ["amazon"]
@@ -134,7 +125,7 @@ data "aws_ami" "amazon_linux_2023" {
 }
 
 
-# Create the EC2 instance
+# EC2 instance
 resource "aws_instance" "web" {
   ami           = data.aws_ami.amazon_linux_2023.id
   instance_type = "t2.micro"
@@ -336,14 +327,6 @@ EOF
   }
 }
 
-# Create a web server (EC2 instance)
-# - Use t2.micro (free tier!)
-# - Put it in a public subnet so people can reach it
-# - Install Python and Flask
-# - Start a Flask web application automatically
-# - The app shows a nice landing page
-
-
 # APPLICATION LOAD BALANCER
 resource "aws_lb" "main" {
   name               = "${var.project_name}-alb"
@@ -357,11 +340,7 @@ resource "aws_lb" "main" {
   }
 }
 
-#Create a load balancer
-# - Sits in front of web servers
-# - Distributes traffic across multiple servers (only have 1 now, but could scale)
-# - Provides a single URL for accessing the app
-
+#load balancer
 # Target group 
 resource "aws_lb_target_group" "main" {
   name     = "${var.project_name}-tg"
@@ -386,12 +365,7 @@ resource "aws_lb_target_group" "main" {
   }
 }
 
-# Create a target group
-# - Defines which servers the load balancer sends traffic to
-# - Checks if servers are healthy every 30 seconds by visiting /health
-# - If a server fails 2 checks, stop sending traffic to it
-
-# Register the EC2 instance with the target group
+# Target group
 resource "aws_lb_target_group_attachment" "main" {
   target_group_arn = aws_lb_target_group.main.arn
   target_id        = aws_instance.web.id
@@ -399,7 +373,7 @@ resource "aws_lb_target_group_attachment" "main" {
 }
 
 
-# Create listener (tells load balancer what to do with incoming traffic)
+# Create listener 
 resource "aws_lb_listener" "main" {
   load_balancer_arn = aws_lb.main.arn
   port              = "80"
@@ -412,7 +386,7 @@ resource "aws_lb_listener" "main" {
 }
 
 
-# OUTPUTS - Important info we want to see
+# OUTPUTS 
 output "load_balancer_url" {
   description = "URL of the load balancer (your website!)"
   value       = "http://${aws_lb.main.dns_name}"
